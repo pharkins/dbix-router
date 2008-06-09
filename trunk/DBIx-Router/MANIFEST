@@ -1,0 +1,13 @@
+Build.PL
+Changes
+MANIFEST
+README
+lib/DBIx/Router.pm
+lib/DBIx/Router/DataSource.pm
+lib/DBIx/Router/DataSource/Handle.pm
+lib/DBIx/Router/DataSource/Pool.pm
+lib/DBIx/Router/Rule.pm
+lib/DBIx/Router/RuleList.pm
+t/00-load.t
+t/pod-coverage.t
+t/pod.t
