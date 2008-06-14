@@ -9,13 +9,12 @@ use Carp;
 use DBI 1.55;
 use DBI::Gofer::Execute;
 use Config::Any;
+use Storable;
 
 our $VERSION = '0.01';
 
 __PACKAGE__->mk_accessors(
     qw(
-      pending_response
-      transmit_count
       )
 );
 
@@ -23,34 +22,29 @@ my $executor = DBI::Gofer::Execute->new();
 
 sub transmit_request_by_transport {
     my ( $self, $request ) = @_;
-    $self->transmit_count( ( $self->transmit_count() || 0 ) + 1 )
-      ;    # just for tests
-
-    my $frozen_request = $self->freeze_request($request);
 
     # ...
     # magic routing happens here
     # ...
 
-    my $response =
-      $executor->execute_request(
-        $self->thaw_request( $frozen_request, undef, 1 ) );
+    # We have to clone the request because the object gets reused but
+    # execute_request damages it.  If we fix this, it should help performance
+    # quite a bit.
+    my $cloned_request = Storable::dclone($request);
+    my $response       = $executor->execute_request($cloned_request);
 
-    # put response 'on the shelf' ready for receive_response()
-    $self->pending_response($response);
-
-    return undef;
+    return $response;
 }
 
-# Do we even need this really? Http transport doesn't use it.
+# Experimental: faster, but skips features we may want
+#*transmit_request = \*transmit_request_by_transport;
+
 sub receive_response_by_transport {
     my $self = shift;
 
-    my $response = $self->pending_response;
-
-    my $frozen_response = $self->freeze_response( $response, undef, 1 );
-
-    return $self->thaw_response($frozen_response);
+    # transmit_request_by_transport does all the work for this driver
+    # so receive_response_by_transport should never be called
+    croak "receive_response_by_transport should never be called";
 }
 
 1;
