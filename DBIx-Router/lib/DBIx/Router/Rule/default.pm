@@ -3,8 +3,10 @@ package DBIx::Router::Rule::default;
 use warnings;
 use strict;
 
+use base qw(DBIx::Router::Rule);
+
 sub accept {
-  return 1;
+    return 1;
 }
 
 1;

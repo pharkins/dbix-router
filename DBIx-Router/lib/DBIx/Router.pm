@@ -10,12 +10,17 @@ use DBI 1.55;
 use DBI::Gofer::Execute;
 use Config::Any;
 use Storable;
+use DBIx::Router::DataSource::DSN;
+use DBIx::Router::DataSource::Group;
+use DBIx::Router::RuleList;
 
 our $VERSION = '0.01';
 
 __PACKAGE__->mk_accessors(
     qw(
       conf
+      rule_list
+      datasources
       )
 );
 
@@ -23,14 +28,8 @@ my $executor = DBI::Gofer::Execute->new();
 
 sub new {
     my ( $class, $args ) = @_;
-
-    #    $args->{$_} = 0 for (qw(cache_hit cache_miss cache_store));
-    #    $args->{keep_meta_frozen} ||= 1 if $args->{go_cache};
-    #warn "args @{[ %$args ]}\n";
     my $self = $class->SUPER::new($args);
-
     $self->_init_conf($args);
-
     return $self;
 }
 
@@ -44,11 +43,52 @@ sub _init_conf {
     my $files =
       Config::Any->load_files( { files => [$conf_file], use_ext => 1, } );
     my ($conf) = values %{ $files->[0] };
+    $conf = Storable::dclone($conf);    # work around Config::Any caching
 
     #use Data::Dumper; warn Dumper $conf;
     croak("Config file '$conf_file' failed to load") if ( ref $conf ne 'HASH' );
 
+    # init datasources
+    my %datasources;
+    foreach my $datasource_args ( @{ $conf->{datasources} } ) {
+        my $datasource = DBIx::Router::DataSource::DSN->new($datasource_args);
+        $datasources{ $datasource_args->{name} } = $datasource;
+    }
+
+    # init rules
+    my @rules;
+    foreach my $rule_args ( @{ $conf->{rules} } ) {
+        my $class = delete $rule_args->{class};
+        if ( $class !~ m/::/ ) {
+
+            # He's one of ours
+            $class = 'DBIx::Router::Rule::' . $class;
+        }
+        $self->_load_class($class)
+          or croak("Failed to load rule class '$class': $@");
+        my $datasource = $datasources{ $rule_args->{datasource} }
+          or croak( "Can't find datasource '$rule_args->{datasource}' "
+              . "configured for rule '$rule_args->{class}'" );
+        my $rule = $class->new( { %{$rule_args}, datasource => $datasource } );
+        push @rules, $rule;
+    }
+    my $rule_list = DBIx::Router::RuleList->new( { rules => \@rules } );
+
     $self->conf($conf);
+    $self->datasources( \%datasources );
+    $self->rule_list($rule_list);
+}
+
+# Ripped from DBD::Gofer
+sub _load_class {    # return true or false+$@
+    my ( $self, $class ) = @_;
+    ( my $pm = $class ) =~ s{::}{/}g;
+    $pm .= ".pm";
+    return 1 if eval { require $pm };
+
+    # shouldn't be needed (perl bug?) and assigning undef isn't enough
+    delete $INC{$pm};
+    undef;           # error in $@
 }
 
 sub transmit_request_by_transport {
@@ -59,15 +99,10 @@ sub transmit_request_by_transport {
     # quite a bit.
     my $cloned_request = Storable::dclone($request);
 
-    # ...
-    # magic routing happens here
-    # ...
-    my $rule_list        = $self->rule_list;
-    my $data_source_name = $rule_list->map_request($cloned_request);
-    my $data_sources     = $self->data_sources;
-    my $data_source      = $data_sources->{$data_source_name};
-
-    return $data_source->execute_request($cloned_request);
+    # And then, a miracle occurs
+    my $rule_list  = $self->rule_list;
+    my $datasource = $rule_list->map_request($cloned_request);
+    return $datasource->execute_request($cloned_request);
 }
 
 # Experimental: faster, but skips features we may want

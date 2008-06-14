@@ -3,6 +3,36 @@ package DBIx::Router::RuleList;
 use warnings;
 use strict;
 
+use Carp;
+use base qw(DBI::Util::_accessor);
+
+__PACKAGE__->mk_accessors(
+    qw(
+      rules
+      )
+);
+
+sub new {
+    my ( $self, $args ) = @_;
+    croak("Missing required parameter 'rules'") if not $args->{rules};
+    return $self->SUPER::new($args);
+}
+
+sub map_request {
+    my ( $self, $request ) = @_;
+
+    foreach my $rule ( @{ $self->rules } ) {
+        if ( $rule->accept($request) ) {
+            return $rule->datasource;
+        }
+    }
+
+    croak( 'Unable to map request: ' . $request->summary_as_text );
+}
+
+1;
+__END__
+
 =head1 NAME
 
 DBIx::Router::RuleList - The great new DBIx::Router::RuleList!
