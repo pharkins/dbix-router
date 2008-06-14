@@ -3,6 +3,23 @@ package DBIx::Router::DataSource;
 use warnings;
 use strict;
 
+use base qw(DBI::Util::_accessor);
+use Carp;
+
+__PACKAGE__->mk_accessors(
+    qw(
+      name
+      )
+);
+
+# Implemented by subclasses
+sub execute_request {
+    croak('DBIx::Router::DataSource::execute_request should never be called');
+}
+
+1;
+__END__
+
 =head1 NAME
 
 DBIx::Router::DataSource - The great new DBIx::Router::DataSource!

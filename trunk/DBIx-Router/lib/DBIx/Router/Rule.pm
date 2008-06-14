@@ -23,6 +23,7 @@ sub accept {
     croak('DBIx::Router::Rule::accept should never be called');
 }
 
+1;
 __END__
 
 =head1 NAME

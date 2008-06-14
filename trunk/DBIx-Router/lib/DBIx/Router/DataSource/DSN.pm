@@ -4,7 +4,7 @@ use warnings;
 use strict;
 
 use Carp;
-use base qw(DBI::Util::_accessor);
+use base qw(DBIx::Router::DataSource);
 use DBI::Gofer::Execute;
 
 __PACKAGE__->mk_accessors(
@@ -20,9 +20,11 @@ sub new {
     my ( $self, $args ) = @_;
     croak('Missing required parameter dsn') if not $args->{dsn};
     $args->{executor} = DBI::Gofer::Execute->new(
-        forced_connect_dsn => $args->{dsn},
-        forced_connect_attributes =>
-          { Username => $args->{username}, $args->{password} },
+        {
+            forced_connect_dsn => $args->{dsn},
+            forced_connect_attributes =>
+              { Username => $args->{username}, Password => $args->{password} },
+        }
     );
     return $self->SUPER::new($args);
 }

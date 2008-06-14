@@ -17,12 +17,12 @@
     rules => [
 
         #         {
-        #             class      => readonly,
-        #             datasource => Test1,
+        #             class      => 'readonly',
+        #             datasource => 'Test1',
         #         },
         {
-            class      => default,
-            datasource => Test2,
+            class      => 'default',
+            datasource => 'Test2',
         }
     ],
 }
