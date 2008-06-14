@@ -70,17 +70,8 @@ my $perl = "$^X  -Mblib=$getcwd/blib"; # ensure sameperl and our blib (note two 
 
 my %trials = (
     null       => {},
-    pipeone    => { perl=>$perl, timeout=>$timeout },
-    stream     => { perl=>$perl, timeout=>$timeout },
-    stream_ssh => ($can_ssh)
-                ? { perl=>$perl, timeout=>$timeout, url => "ssh:$username\@localhost" }
-                : undef,
-    #http       => { url => "http://localhost:8001/gofer" },
     'DBIx::Router' => { timeout=>$timeout },
 );
-
-# too dependant on local config to make a standard test
-delete $trials{http} unless $username eq 'timbo' && -d '.svn';
 
 my @transports = ($opt_transport) ? ($opt_transport) : (sort keys %trials);
 print "Transports: @transports\n";
