@@ -1,29 +1,15 @@
-package DBIx::Router::Rule;
+package DBIx::Router::Rule::default;
 
 use warnings;
 use strict;
 
-use Carp;
-use base qw(DBI::Util::_accessor);
-
-__PACKAGE__->mk_accessors(
-    qw(
-      datasource
-      )
-);
-
-sub new {
-    my ( $self, $args ) = @_;
-    croak('Missing required parameter datasource') if not $args->{datasource};
-    return $self->SUPER::new($args);
-}
-
-# This is implemented by subclasses
 sub accept {
-    croak('DBIx::Router::Rule::accept should never be called');
+  return 1;
 }
 
+1;
 __END__
+
 
 =head1 NAME
 

@@ -54,17 +54,20 @@ sub _init_conf {
 sub transmit_request_by_transport {
     my ( $self, $request ) = @_;
 
-    # ...
-    # magic routing happens here
-    # ...
-
     # We have to clone the request because the object gets reused but
     # execute_request damages it.  If we fix this, it should help performance
     # quite a bit.
     my $cloned_request = Storable::dclone($request);
-    my $response       = $executor->execute_request($cloned_request);
 
-    return $response;
+    # ...
+    # magic routing happens here
+    # ...
+    my $rule_list        = $self->rule_list;
+    my $data_source_name = $rule_list->map_request($cloned_request);
+    my $data_sources     = $self->data_sources;
+    my $data_source      = $data_sources->{$data_source_name};
+
+    return $data_source->execute_request($cloned_request);
 }
 
 # Experimental: faster, but skips features we may want

@@ -1,7 +1,39 @@
-package DBIx::Router::DataSource::Handle;
+package DBIx::Router::DataSource::DSN;
 
 use warnings;
 use strict;
+
+use Carp;
+use base qw(DBI::Util::_accessor);
+use DBI::Gofer::Execute;
+
+__PACKAGE__->mk_accessors(
+    qw(
+      dsn
+      user
+      password
+      executor
+      )
+);
+
+sub new {
+    my ( $self, $args ) = @_;
+    croak('Missing required parameter dsn') if not $args->{dsn};
+    $args->{executor} = DBI::Gofer::Execute->new(
+        forced_connect_dsn => $args->{dsn},
+        forced_connect_attributes =>
+          { Username => $args->{username}, $args->{password} },
+    );
+    return $self->SUPER::new($args);
+}
+
+sub execute_request {
+    my ( $self, $request ) = @_;
+    return $self->executor->execute_request($request);
+}
+
+1;
+__END__
 
 =head1 NAME
 
