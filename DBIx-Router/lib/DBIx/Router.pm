@@ -15,10 +15,41 @@ our $VERSION = '0.01';
 
 __PACKAGE__->mk_accessors(
     qw(
+      conf
       )
 );
 
 my $executor = DBI::Gofer::Execute->new();
+
+sub new {
+    my ( $class, $args ) = @_;
+
+    #    $args->{$_} = 0 for (qw(cache_hit cache_miss cache_store));
+    #    $args->{keep_meta_frozen} ||= 1 if $args->{go_cache};
+    #warn "args @{[ %$args ]}\n";
+    my $self = $class->SUPER::new($args);
+
+    $self->_init_conf($args);
+
+    return $self;
+}
+
+sub _init_conf {
+    my ( $self, $args ) = @_;
+
+    my $conf_file = $ENV{DBIX_ROUTER_CONF} || $args->{go_conf};
+    croak('No config file specified') if not $conf_file;
+
+    # I wish Config::Any had a simpler API for loading a single file...
+    my $files =
+      Config::Any->load_files( { files => [$conf_file], use_ext => 1, } );
+    my ($conf) = values %{ $files->[0] };
+
+    #use Data::Dumper; warn Dumper $conf;
+    croak("Config file '$conf_file' failed to load") if ( ref $conf ne 'HASH' );
+
+    $self->conf($conf);
+}
 
 sub transmit_request_by_transport {
     my ( $self, $request ) = @_;
