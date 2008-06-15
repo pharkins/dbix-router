@@ -26,4 +26,5 @@
             datasource => 'Test2',
         }
     ],
+    fallback => 1,
 }
