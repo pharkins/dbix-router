@@ -9,6 +9,9 @@ use Carp;
 __PACKAGE__->mk_accessors(
     qw(
       datasources
+      failover
+      timeout
+      retry_test
       )
 );
 
@@ -19,9 +22,17 @@ sub new {
 }
 
 sub execute_request {
-    my ( $self, $request ) = @_;
+    my ( $self, $request, $transport ) = @_;
     my $datasource = $self->choose_datasource($request);
-    return $datasource->execute_request($request);
+
+    if ( $self->failover ) {
+        $transport->go_timeout( $self->timeout );
+        $transport->go_retry_limit(99);    # let retry hook decide if we go on
+        $transport->go_retry_hook( \&DBIx::Router::retry_hook );
+        $transport->last_group($self);
+    }
+
+    return $datasource->execute_request($request, $transport);
 }
 
 sub choose_datasource {

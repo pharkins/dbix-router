@@ -5,7 +5,7 @@ use strict;
 
 use base qw(DBIx::Router::DataSource::Group);
 
-__PACKAGE__->mk_accessors( qw(last_index) );
+__PACKAGE__->mk_accessors(qw(last_index));
 
 sub new {
     my ( $self, $args ) = @_;
@@ -17,9 +17,9 @@ sub choose_datasource {
     my ( $self, $request ) = @_;
 
     my $datasources = $self->datasources;
-    my $index = $self->last_index;
+    my $index       = $self->last_index;
     $index++;
-    if ($index > $#{$datasources}) { $index = 0 };
+    if ( $index > $#{$datasources} ) { $index = 0 }
     $self->last_index($index);
 
     return $datasources->[$index];

@@ -30,7 +30,11 @@ sub new {
 }
 
 sub execute_request {
-    my ( $self, $request ) = @_;
+    my ( $self, $request, $transport ) = @_;
+
+    # Store this for failover
+    $transport->last_dsn($self);
+
     return $self->executor->execute_request($request);
 }
 

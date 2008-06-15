@@ -7,7 +7,7 @@ use base qw(DBIx::Router::DataSource::Group);
 use Storable;
 
 sub execute_request {
-    my ( $self, $request ) = @_;
+    my ( $self, $request, $transport ) = @_;
 
     my $datasources = $self->datasources;
     my $response;
@@ -16,7 +16,9 @@ sub execute_request {
     foreach my $datasource ( @{$datasources} ) {
 
         # Need to clone here because $request gets mangled
-        $response = $datasource->execute_request( Storable::dclone($request) );
+        $response =
+          $datasource->execute_request( Storable::dclone($request),
+            $transport );
     }
 
     return $response;

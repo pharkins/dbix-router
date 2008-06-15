@@ -23,6 +23,8 @@ __PACKAGE__->mk_accessors(
       conf
       rule_list
       datasources
+      last_group
+      last_dsn
       )
 );
 
@@ -142,14 +144,17 @@ sub transmit_request_by_transport {
     # quite a bit.
     my $cloned_request = Storable::dclone($request);
 
-    # And then, a miracle occurs
+    # Reset these to clear leftover values from a failover request
+    # There's a bug here
+    #$self->go_timeout(undef);
+    #$self->go_retry_limit(0);
+    #$self->go_retry_hook(undef);
+
+    # "And then, a miracle occurs"
     my $rule_list  = $self->rule_list;
     my $datasource = $rule_list->map_request($cloned_request);
-    return $datasource->execute_request($cloned_request);
+    return $datasource->execute_request( $cloned_request, $self );
 }
-
-# Experimental: faster, but skips features we may want
-#*transmit_request = \*transmit_request_by_transport;
 
 sub receive_response_by_transport {
     my $self = shift;
@@ -157,6 +162,46 @@ sub receive_response_by_transport {
     # transmit_request_by_transport does all the work for this driver
     # so receive_response_by_transport should never be called
     croak "receive_response_by_transport should never be called";
+}
+
+sub retry_hook {
+    my ( $request, $response, $self ) = @_;
+
+    # We retry if it's a network error
+    # Add a call to user-specified retry_method here for additional reasons
+    my $retry = 0;
+    if ( $response->errstr =~ /DBD::Gofer .* timed-out/imxs ) {
+
+        # We currently only retry read-only statements. Should offer a way
+        # to let users live dangerously if they really want to.
+        my $idempotent = $request->is_idempotent;
+        $retry = 1 if $idempotent;
+
+        # Remove the failed datasource. It stays out until you restart.
+        my $group       = $self->last_group;
+        my $dsn_name    = $self->last_dsn->name;
+        my $datasources = $group->datasources;
+
+        warn "Failure on datasource '$dsn_name' in group '"
+          . $group->name
+          . "'. Removing from further requests.\n";
+
+        # Just comparing by name here. Probably could do better.
+        my @good_datasources = grep { $_->name ne $dsn_name } @{$datasources};
+
+        if ( not scalar @good_datasources ) {
+
+            # No more left! Can't retry, and removing the last one will just
+            # cause mayhem.
+            return 0;
+        }
+
+        # Really should remove it from any other groups too, but that will mean
+        # building in more relationship tracking.
+        $group->datasources( \@good_datasources );
+    }
+
+    return $retry;
 }
 
 1;

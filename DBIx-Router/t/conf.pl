@@ -38,7 +38,9 @@
             name        => 'RoundRobin',
             class       => 'roundrobin',
             datasources => [ 'Master1', 'Slave1', ],
-        }
+	    failover    => 1,
+	    timeout     => 2,
+        },
     ],
     rules => [
         {
