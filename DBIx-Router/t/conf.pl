@@ -33,12 +33,17 @@
             name        => 'Repeater',
             class       => 'repeater',
             datasources => [ 'Master1', 'Master2', ],
+        },
+        {
+            name        => 'RoundRobin',
+            class       => 'roundrobin',
+            datasources => [ 'Master1', 'Slave1', ],
         }
     ],
     rules => [
         {
             class      => 'regex',
-            datasource => 'Random',
+            datasource => 'RoundRobin',
             match      => ['^ \s* SELECT \b '],
             not_match  => ['\b FOR \s+ UPDATE \b '],
         },
