@@ -14,6 +14,7 @@ use DBIx::Router::DataSource::DSN;
 use DBIx::Router::DataSource::Group;
 use DBIx::Router::DataSource::PassThrough;
 use DBIx::Router::RuleList;
+use DBIx::Router::Rule::default;
 
 our $VERSION = '0.01';
 
@@ -74,7 +75,7 @@ sub _init_conf {
         push @rules, $rule;
     }
 
-    if ( my $fallback = defined $args->{fallback} ? $args->{fallback} : 1 ) {
+    if ( defined $conf->{fallback} ? $conf->{fallback} : 1 ) {
         my $passthrough = DBIx::Router::DataSource::PassThrough->new();
         my $default =
           DBIx::Router::Rule::default->new( { datasource => $passthrough } );
