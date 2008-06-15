@@ -15,11 +15,12 @@
 
     ],
     rules => [
-
-        #         {
-        #             class      => 'readonly',
-        #             datasource => 'Test1',
-        #         },
+        {
+            class      => 'regex',
+            datasource => 'Test1',
+            match      => ['^ \s* SELECT \b '],
+            not_match  => ['\b FOR \s+ UPDATE \b '],
+        },
         {
             class      => 'default',
             datasource => 'Test2',
