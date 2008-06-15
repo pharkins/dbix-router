@@ -108,9 +108,10 @@ sub _init_conf {
     }
 
     if ( defined $conf->{fallback} ? $conf->{fallback} : 1 ) {
-        my $passthrough = DBIx::Router::DataSource::PassThrough->new();
-        my $fallback    = DBIx::Router::Rule::default->new(
-            { datasource => $passthrough, name => 'fallback' } );
+        my $passthrough = DBIx::Router::DataSource::PassThrough->new(
+            { name => 'passthrough' } );
+        my $fallback =
+          DBIx::Router::Rule::default->new( { datasource => $passthrough } );
         push @rules, $fallback;
     }
 
