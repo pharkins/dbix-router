@@ -139,9 +139,10 @@ sub run_tests {
     die "$test_run_tag aborted: $DBI::errstr\n" unless $dbh; # no point continuing
     ok $dbh, sprintf "should connect to %s", $dsn;
 
-    is $dbh->{Name}, ($policy->skip_connect_check)
-        ? $driver_dsn
-        : $remote_driver_dsn;
+    # Router messes with this on purpose.
+#     is $dbh->{Name}, ($policy->skip_connect_check)
+#         ? $driver_dsn
+#         : $remote_driver_dsn;
 
     ok $dbh->do("DROP TABLE IF EXISTS fruit");
     ok $dbh->do("CREATE TABLE fruit (dKey INT, dVal VARCHAR(10))");
