@@ -1,31 +1,15 @@
-package DBIx::Router::DataSource::Group;
+package DBIx::Router::DataSource::Group::random;
 
 use warnings;
 use strict;
 
-use base qw(DBIx::Router::DataSource);
-use Carp;
-
-__PACKAGE__->mk_accessors(
-    qw(
-      datasources
-      )
-);
-
-sub new {
-    my ( $self, $args ) = @_;
-    croak('Missing required parameter datasources') if not $args->{datasources};
-    return $self->SUPER::new($args);
-}
-
-sub execute_request {
-    my ( $self, $request ) = @_;
-    my $datasource = $self->choose_datasource($request);
-    return $datasource->execute_request($request);
-}
+use base qw(DBIx::Router::DataSource::Group);
 
 sub choose_datasource {
-    croak( __PACKAGE__ . '::choose_datasource should never be called' );
+    my ( $self, $request ) = @_;
+    my $datasources = $self->datasources;
+    my $random = $datasources->[rand @{$datasources}];
+    return $random;
 }
 
 1;
