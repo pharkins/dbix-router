@@ -52,34 +52,66 @@ sub _init_conf {
 
     # init datasources
     my %datasources;
-    foreach my $datasource_args ( @{ $conf->{datasources} } ) {
-        my $datasource = DBIx::Router::DataSource::DSN->new($datasource_args);
-        $datasources{ $datasource_args->{name} } = $datasource;
+    foreach my $ds_args ( @{ $conf->{datasources} } ) {
+        if ( exists $datasources{ $ds_args->{name} } ) {
+            croak("Duplicate definition for datasource '$ds_args->{name}'");
+        }
+
+        my $datasource;
+
+        my $class = delete $ds_args->{class};
+        if ( not $class or $class =~ m/^dsn$/i ) {
+            $datasource = DBIx::Router::DataSource::DSN->new($ds_args);
+        }
+        else {
+            if ( $class !~ m/::/ ) {
+
+                # He's one of ours
+                $class = 'DBIx::Router::DataSource::Group::' . $class;
+            }
+            $self->_load_class($class)
+              or croak("Failed to load datasource class '$class': $@");
+
+            my @group_sources;
+            foreach my $group_source ( @{ $ds_args->{datasources} } ) {
+                my $ds_obj = $datasources{$group_source}
+                  or croak( "Can't find datasource '$group_source' "
+                      . "configured for group '$ds_args->{name}'. "
+                      . "Make sure you define it before referencing it by name."
+                  );
+                push @group_sources, $ds_obj;
+            }
+            $datasource =
+              $class->new( { %{$ds_args}, datasources => \@group_sources } );
+        }
+
+        $datasources{ $ds_args->{name} } = $datasource;
     }
 
     # init rules
     my @rules;
     foreach my $rule_args ( @{ $conf->{rules} } ) {
+
         my $class = delete $rule_args->{class};
         if ( $class !~ m/::/ ) {
-
-            # He's one of ours
             $class = 'DBIx::Router::Rule::' . $class;
         }
         $self->_load_class($class)
           or croak("Failed to load rule class '$class': $@");
+
         my $datasource = $datasources{ $rule_args->{datasource} }
           or croak( "Can't find datasource '$rule_args->{datasource}' "
               . "configured for rule '$rule_args->{class}'" );
+
         my $rule = $class->new( { %{$rule_args}, datasource => $datasource } );
         push @rules, $rule;
     }
 
     if ( defined $conf->{fallback} ? $conf->{fallback} : 1 ) {
         my $passthrough = DBIx::Router::DataSource::PassThrough->new();
-        my $default =
-          DBIx::Router::Rule::default->new( { datasource => $passthrough } );
-        push @rules, $default;
+        my $fallback    = DBIx::Router::Rule::default->new(
+            { datasource => $passthrough, name => 'fallback' } );
+        push @rules, $fallback;
     }
 
     my $rule_list = DBIx::Router::RuleList->new( { rules => \@rules } );
