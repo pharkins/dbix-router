@@ -12,6 +12,7 @@ use Config::Any;
 use Storable;
 use DBIx::Router::DataSource::DSN;
 use DBIx::Router::DataSource::Group;
+use DBIx::Router::DataSource::PassThrough;
 use DBIx::Router::RuleList;
 
 our $VERSION = '0.01';
@@ -72,6 +73,14 @@ sub _init_conf {
         my $rule = $class->new( { %{$rule_args}, datasource => $datasource } );
         push @rules, $rule;
     }
+
+    if ( my $fallback = defined $args->{fallback} ? $args->{fallback} : 1 ) {
+        my $passthrough = DBIx::Router::DataSource::PassThrough->new();
+        my $default =
+          DBIx::Router::Rule::default->new( { datasource => $passthrough } );
+        push @rules, $default;
+    }
+
     my $rule_list = DBIx::Router::RuleList->new( { rules => \@rules } );
 
     $self->conf($conf);
