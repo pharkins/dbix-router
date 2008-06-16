@@ -43,15 +43,19 @@
         },
     ],
     rules => [
-        {
-            class      => 'regex',
+#         {
+#             class      => 'regex',
+#             datasource => 'RoundRobin',
+#             match      => ['^ \s* SELECT \b '],
+#             not_match  => ['\b FOR \s+ UPDATE \b '],
+#         },
+                {
+            class      => 'readonly',
             datasource => 'RoundRobin',
-            match      => ['^ \s* SELECT \b '],
-            not_match  => ['\b FOR \s+ UPDATE \b '],
         },
         {
             class      => 'default',
-            datasource => 'Repeater',
+            datasource => 'Master1',
         }
     ],
 
