@@ -5,26 +5,9 @@ use strict;
 
 use base qw(DBIx::Router::Rule);
 use SQL::Statement;
+use Carp;
 
 __PACKAGE__->mk_accessors(qw(match));
-
-sub accept {
-    my ( $self, $request ) = @_;
-
-    my @statements = $request->statements;
-    my $parser     = SQL::Parser->new();
-    $parser->{PrinteError} = 1;
-
-    foreach my $statement (@statements) {
-        my $stmt = SQL::Statement->new( $statement, $parser );
-
-        foreach my $match ( @{ $self->match } ) {
-            if ( not $self->_evaluate_match( $stmt, $match ) ) { return 0; }
-        }
-    }
-
-    return 1;
-}
 
 our %_extract_tokens = (
     command => sub { $_[0]->command },
@@ -66,6 +49,39 @@ our %_eval_operator = (
         return 1;
     },
 );
+
+sub new {
+    my ( $self, $args ) = @_;
+
+    croak "No matching rules specified" if not $args->{match};
+
+    foreach my $match ( @{ $args->{match} } ) {
+        croak "Unkown structure '$match->{structure}'"
+          if not $_extract_tokens{ $match->{structure} };
+        croak "Unkown operator '$match->{operator}'"
+          if not $_eval_operator{ $match->{operator} };
+    }
+
+    return $self->SUPER::new($args);
+}
+
+sub accept {
+    my ( $self, $request ) = @_;
+
+    my @statements = $request->statements;
+    my $parser     = SQL::Parser->new();
+    $parser->{PrinteError} = 1;
+
+    foreach my $statement (@statements) {
+        my $stmt = SQL::Statement->new( $statement, $parser );
+
+        foreach my $match ( @{ $self->match } ) {
+            if ( not $self->_evaluate_match( $stmt, $match ) ) { return 0; }
+        }
+    }
+
+    return 1;
+}
 
 sub _evaluate_match {
     my ( $self, $stmt, $match ) = @_;
