@@ -81,9 +81,15 @@
             datasource => 'RoundRobin',
         },
         {
-            class      => 'default',
+            class      => 'not',
+            rule       => { class => 'readonly', },
             datasource => 'Master1',
-        }
+        },
+
+        #      {
+        #             class      => 'default',
+        #             datasource => 'Master1',
+        #         },
     ],
 
     fallback => 0,
