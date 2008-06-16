@@ -38,18 +38,45 @@
             name        => 'RoundRobin',
             class       => 'roundrobin',
             datasources => [ 'Master1', 'Slave1', ],
-	    failover    => 1,
-	    timeout     => 2,
+            failover    => 1,
+            timeout     => 2,
         },
     ],
     rules => [
-#         {
-#             class      => 'regex',
-#             datasource => 'RoundRobin',
-#             match      => ['^ \s* SELECT \b '],
-#             not_match  => ['\b FOR \s+ UPDATE \b '],
-#         },
+
+        #         {
+        #             class      => 'regex',
+        #             datasource => 'RoundRobin',
+        #             match      => ['^ \s* SELECT \b '],
+        #             not_match  => ['\b FOR \s+ UPDATE \b '],
+        #         },
+        {
+            class => 'parser',
+            match => [
                 {
+                    structure => 'tables',
+                    operator  => 'all',
+                    tokens    => ['fruit']
+                },
+                {
+                    structure => 'tables',
+                    operator  => 'none',
+                    tokens    => ['orders']
+                },
+                {
+                    structure => 'command',
+                    operator  => 'any',
+                    tokens    => ['select']
+                },
+                {
+                    structure => 'columns',
+                    operator  => 'any',
+                    tokens    => ['fruit.type']
+                },
+            ],
+            datasource => 'RoundRobin',
+        },
+        {
             class      => 'readonly',
             datasource => 'RoundRobin',
         },
