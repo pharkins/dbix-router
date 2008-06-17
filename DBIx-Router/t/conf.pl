@@ -41,6 +41,16 @@
             failover    => 1,
             timeout     => 2,
         },
+        {
+            name   => 'Partitioned',
+            class  => 'shard',
+            type   => 'list',
+            column => 'fruit.dkey',
+            shards => [
+                { values => [ 1, 3, 5 ], datasource => 'Master1', },
+                { values => [ 2, 4, 6 ], datasource => 'Master2', },
+            ],
+        },
     ],
     rules => [
 
