@@ -15,6 +15,12 @@ __PACKAGE__->mk_accessors(
       )
 );
 
+sub new {
+    my ( $self, $args ) = @_;
+    croak('Missing required parameter datasources') if not $args->{datasources};
+    return $self->SUPER::new($args);
+}
+
 sub execute_request {
     my ( $self, $request, $transport ) = @_;
     my $datasource = $self->choose_datasource($request);
