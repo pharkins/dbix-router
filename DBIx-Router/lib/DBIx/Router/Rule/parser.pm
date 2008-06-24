@@ -12,39 +12,51 @@ __PACKAGE__->mk_accessors(qw(match));
 our %_extract_tokens = (
     command => sub { $_[0]->command },
     tables  => sub {
-        map { $_->name } $_[0]->tables;
+        my @tables = $_[0]->tables or return;
+        map { $_->name } @tables;
     },
     columns => sub {
-        map { $_->table . '.' . $_->name } $_[0]->columns;
+        my @columns = $_[0]->columns;
+
+        # Sometimes we just get a '0' here...
+        return if grep { not ref $_ } @columns;
+
+        # And sometimes the columns have no table definition, but if there's
+        # only one table we can infer.
+        my @tables = $_[0]->tables;
+        my $default_table = ( @tables == 1 ) ? $tables[0]->name : '';
+        map {
+            ( defined $_->table ? $_->table : $default_table ) . '.' . $_->name
+        } @columns;
     },
 );
 
 our %_eval_operator = (
     all => sub {
-        my ( $stmt_tokens, $match_tokens ) = @_;
+        my ( $stmt_tokens, $match_tokens, $structure ) = @_;
         foreach my $match_token ( @{$match_tokens} ) {
-            grep { $_ eq $match_token } @{$stmt_tokens} or return 0;
+            grep { $match_token =~ m/^$_$/i } @{$stmt_tokens} or return 0;
         }
         return 1;
     },
     any => sub {
-        my ( $stmt_tokens, $match_tokens ) = @_;
+        my ( $stmt_tokens, $match_tokens, $structure ) = @_;
         foreach my $stmt_token ( @{$stmt_tokens} ) {
-            grep { $_ eq $stmt_token } @{$match_tokens} and return 1;
+            grep { $_ =~ m/^$stmt_token$/i } @{$match_tokens} and return 1;
         }
         return 0;
     },
     none => sub {
-        my ( $stmt_tokens, $match_tokens ) = @_;
+        my ( $stmt_tokens, $match_tokens, $structure ) = @_;
         foreach my $stmt_token ( @{$stmt_tokens} ) {
-            grep { $_ eq $stmt_token } @{$match_tokens} and return 0;
+            grep { $_ =~ m/^$stmt_token$/i } @{$match_tokens} and return 0;
         }
         return 1;
     },
     only => sub {
-        my ( $stmt_tokens, $match_tokens ) = @_;
+        my ( $stmt_tokens, $match_tokens, $structure ) = @_;
         foreach my $stmt_token ( @{$stmt_tokens} ) {
-            grep { $_ eq $stmt_token } @{$match_tokens} or return 0;
+            grep { $_ =~ m/^$stmt_token$/i } @{$match_tokens} or return 0;
         }
         return 1;
     },
@@ -68,13 +80,10 @@ sub new {
 sub accept {
     my ( $self, $request ) = @_;
 
-    my @statements = $request->statements;
-    my $parser     = SQL::Parser->new();
-    $parser->{PrinteError} = 1;
+    $request->meta->{parsed_stmts} ||= $self->_parse($request);
+    return 0 if not @{ $request->meta->{parsed_stmts} };
 
-    foreach my $statement (@statements) {
-        my $stmt = SQL::Statement->new( $statement, $parser );
-
+    foreach my $stmt ( @{ $request->meta->{parsed_stmts} } ) {
         foreach my $match ( @{ $self->match } ) {
             if ( not $self->_evaluate_match( $stmt, $match ) ) { return 0; }
         }
@@ -83,12 +92,33 @@ sub accept {
     return 1;
 }
 
+sub _parse {
+    my ( $self, $request ) = @_;
+
+    my @statements = $request->statements;
+    my $parser     = SQL::Parser->new();
+    $parser->{PrinteError} = 1;
+
+    return [ map { SQL::Statement->new( $_, $parser ) } @statements ];
+}
+
 sub _evaluate_match {
     my ( $self, $stmt, $match ) = @_;
 
     my @stmt_tokens = $_extract_tokens{ $match->{structure} }->($stmt);
+
+    # Change them to regexes
+    foreach my $token (@stmt_tokens) {
+        if ( $token =~ s/\*$// ) {
+            $token = quotemeta($token) . '[^.]+';
+        }
+        else {
+            $token = quotemeta($token);
+        }
+    }
+
     return $_eval_operator{ $match->{operator} }
-      ->( \@stmt_tokens, $match->{tokens} );
+      ->( \@stmt_tokens, $match->{tokens}, $match->{structure} );
 }
 
 1;
