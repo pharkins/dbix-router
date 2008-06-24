@@ -45,7 +45,8 @@
             name   => 'Partitioned',
             class  => 'shard',
             type   => 'list',
-            column => 'fruit.dkey',
+            table  => 'fruit',
+            column => 'dkey',
             shards => [
                 { values => [ 1, 3, 5 ], datasource => 'Master1', },
                 { values => [ 2, 4, 6 ], datasource => 'Master2', },
@@ -53,6 +54,10 @@
         },
     ],
     rules => [
+        {
+            class      => 'shard',
+            datasource => 'Partitioned',
+        },
 
         #         {
         #             class      => 'regex',

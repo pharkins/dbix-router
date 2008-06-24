@@ -6,7 +6,7 @@ use strict;
 use base qw(DBIx::Router::DataSource::Group);
 use Carp;
 
-__PACKAGE__->mk_accessors(qw(shards type column));
+__PACKAGE__->mk_accessors(qw(shards type table column));
 
 sub new {
     my ( $self, $args ) = @_;
@@ -25,12 +25,16 @@ sub choose_datasource {
     my ( $self, $request ) = @_;
 
     # parsed statement should be in meta, but fallback to parsing ourselves
-    $request->meta->{parsed_stmt} ||= $self->_parse($request);
+    $request->meta->{parsed_stmts} ||=
+      DBIx::Router::Rule::parser->_parse($request);
+    if ( @{ $request->meta->{parsed_stmts} } > 1 ) {
+        croak('Multiple statements in one query is not supported for shard');
+    }
 
     my $shard_value =
-      $self->_shard_value( $request->meta->{parsed_stmt}, $request );
+      $self->_shard_value( $request->meta->{parsed_stmts}->[0], $request );
     my $partition_method = '_partition_by_' . $self->type;
-    return $self->$partition_method($shard_value, $request);
+    return $self->$partition_method( $shard_value, $request );
 }
 
 sub _shard_value {
@@ -40,14 +44,17 @@ sub _shard_value {
     my $where = $stmt->where;
     if ($where) {
 
+        # NOT IMPLEMENTED YET
     }
 
     # check for INSERT/UPDATE values
     my @columns = map { $_->table . '.' . $_->name } $stmt->columns;
-    my @values = $stmt->rowValues;
+    my @values = $stmt->row_values;
+
     my %column_value;
     @column_value{@columns} = @values;
-    my $value = $column_value{ $self->column };
+
+    my $value = $column_value{ $self->table . '.' . $self->column };
     if ( ref $value eq 'SQL::Statement::Param' ) {
         my $param_num = $value->num;
         $value = $self->_value_for_param( $param_num, $request );
@@ -61,8 +68,7 @@ sub _value_for_param {
     my $call = pop @{ $request->sth_method_calls || [] }
       or croak "Can't find sth call for request: " . $request->summary_as_text;
     ( undef, my @args ) = @{$call};
-    use Data::Dumper;
-    warn 'args: ' . Dumper \@args;
+
     return $args[$param_num];
 }
 
@@ -76,19 +82,6 @@ sub _partition_by_list {
     }
     croak "Couldn't map to shard for value '$shard_value' in request: "
       . $request->summary_as_text;
-}
-
-sub _parse {
-    my ( $self, $request ) = @_;
-
-    my @statements = $request->statements;
-    if ( @statements > 1 ) {
-        croak('Multiple statements in one query is not supported for shard');
-    }
-    my $parser = SQL::Parser->new();
-    $parser->{PrinteError} = 1;
-
-    return SQL::Statement->new( $statements[0], $parser );
 }
 
 1;
