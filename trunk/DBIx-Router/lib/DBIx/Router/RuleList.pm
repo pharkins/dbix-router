@@ -55,4 +55,4 @@ Accessor for rules arrayref.
 
 =head2 map_request($request)
 
-This is passed a request and tries each Rule in order until it finds one that will accept the request.  When it finds one, it returns that Rule's datasource.  If none is found, it will throw an exception.  Normally a RuleList would either have a default rule at the end or use the C<passthrough> option.
+This is passed a request and tries each Rule in order until it finds one that will accept the request.  When it finds one, it returns that Rule's datasource.  If none is found, it will throw an exception.  Normally a RuleList would either have a default rule at the end or use the C<fallback> option.
