@@ -17,103 +17,20 @@ __END__
 
 =head1 NAME
 
-DBIx::Router::DataSource::Pool - The great new DBIx::Router::DataSource::Pool!
-
-=head1 VERSION
-
-Version 0.01
-
-=cut
-
-our $VERSION = '0.01';
-
+DBIx::Router::DataSource::Group::random - Distribute requests randomly
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
+This DataSource will distribute requests randomly among a group of DSNs.  This is useful if you have replicated read-only slaves and want to distribute load between them.
 
-Perhaps a little code snippet.
+    my $group =
+        DBIx::Router::DataSource::Group::random->new( { name => 'my_group',
+                                                datasources => \@group_sources, } );
+    
+    my $ds = $group->choose_datasource( $request );
 
-    use DBIx::Router::DataSource::Pool;
+=head1 METHODS
 
-    my $foo = DBIx::Router::DataSource::Pool->new();
-    ...
+=head2 choose_datasource($request)
 
-=head1 EXPORT
-
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
-
-=head1 FUNCTIONS
-
-=head2 function1
-
-=cut
-
-sub function1 {
-}
-
-=head2 function2
-
-=cut
-
-sub function2 {
-}
-
-=head1 AUTHOR
-
-Perrin Harkins, C<< <perrin at elem.com> >>
-
-=head1 BUGS
-
-Please report any bugs or feature requests to C<bug-dbix-router-datasource-pool at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBIx-Router>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-
-
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc DBIx::Router
-
-
-You can also look for information at:
-
-=over 4
-
-=item * RT: CPAN's request tracker
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=DBIx-Router>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/DBIx-Router>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/DBIx-Router>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/DBIx-Router>
-
-=back
-
-
-=head1 ACKNOWLEDGEMENTS
-
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright 2008 Perrin Harkins, all rights reserved.
-
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
-
-
-=cut
-
-1; # End of DBIx::Router::DataSource::Pool
+Picks a random DataSource from C<< $self->datasources >> and returns it.

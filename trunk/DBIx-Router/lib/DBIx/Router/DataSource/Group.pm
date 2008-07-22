@@ -11,7 +11,7 @@ __PACKAGE__->mk_accessors(
       datasources
       failover
       timeout
-      retry_test
+      retry_hook
       )
 );
 
@@ -44,103 +44,40 @@ __END__
 
 =head1 NAME
 
-DBIx::Router::DataSource::Pool - The great new DBIx::Router::DataSource::Pool!
-
-=head1 VERSION
-
-Version 0.01
-
-=cut
-
-our $VERSION = '0.01';
-
+DBIx::Router::DataSource::Group - Handle a request using a group of DSNs
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
+This is the base class for DataSource groups.  Subclasses will decide which DSNs they want to use to execute a given request.  This is different from Rule classes which decide whether to handle a request at all.
 
-Perhaps a little code snippet.
+    my $ds =
+        DBIx::Router::DataSource::Group->new( { name        => 'my_group',
+                                                datasources => \@group_sources, } );
+    
+    my $result = $ds->execute_request( $request, $router );
 
-    use DBIx::Router::DataSource::Pool;
+=head1 METHODS
 
-    my $foo = DBIx::Router::DataSource::Pool->new();
-    ...
+=head2 name
 
-=head1 EXPORT
+Accessor for name attribute.
 
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
+=head2 datasources
 
-=head1 FUNCTIONS
+Accessor for arrayref of DataSource objects.
 
-=head2 function1
+=head2 failover
 
-=cut
+If set to true, this group will attempt to do failover between DataSources.
 
-sub function1 {
-}
+=head2 timeout
 
-=head2 function2
+Accessor for timeout attribute.  This is the time in seconds that Gofer will wait before considering the request failed.  This is only used when failover is active.
 
-=cut
+=head2 execute_request($request, $router)
 
-sub function2 {
-}
+Choose a DataSource to use and execute the request with it.  See DBIx::Router::DataSource.
 
-=head1 AUTHOR
+=head2 choose_datasource($request)
 
-Perrin Harkins, C<< <perrin at elem.com> >>
-
-=head1 BUGS
-
-Please report any bugs or feature requests to C<bug-dbix-router-datasource-pool at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBIx-Router>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-
-
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc DBIx::Router
-
-
-You can also look for information at:
-
-=over 4
-
-=item * RT: CPAN's request tracker
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=DBIx-Router>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/DBIx-Router>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/DBIx-Router>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/DBIx-Router>
-
-=back
-
-
-=head1 ACKNOWLEDGEMENTS
-
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright 2008 Perrin Harkins, all rights reserved.
-
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
-
-
-=cut
-
-1; # End of DBIx::Router::DataSource::Pool
+This is a virtual method that child classes implement to decide which DataSource to use for a given request.
