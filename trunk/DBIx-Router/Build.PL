@@ -13,6 +13,7 @@ my $builder = Module::Build->new(
     requires => {
         'DBI'            => 1.54,
         'SQL::Statement' => 0,
+        'Config::Any'    => 0,
     },
     add_to_cleanup      => [ 'DBIx-Router-*' ],
     create_makefile_pl => 'traditional',
