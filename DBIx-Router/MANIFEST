@@ -22,7 +22,7 @@ README
 t/00-load.t
 t/bench.t
 t/boilerplate.t
-t/conf.pl
+t/test_conf.pl
 t/pod-coverage.t
 t/pod.t
 Makefile.PL
