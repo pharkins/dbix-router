@@ -70,7 +70,7 @@ my $perl = "$^X  -Mblib=$getcwd/blib"; # ensure sameperl and our blib (note two 
 
 my %trials = (
     null       => {},
-    'DBIx::Router' => { timeout=>$timeout },
+    'DBIx::Router' => { timeout => $timeout, conf => 't/test_conf.pl' },
 );
 
 my @transports = ($opt_transport) ? ($opt_transport) : (sort keys %trials);
