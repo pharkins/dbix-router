@@ -1,4 +1,3 @@
-.cvsignore
 Build.PL
 Changes
 lib/DBIx/Router.pm
@@ -9,9 +8,7 @@ lib/DBIx/Router/DataSource/Group/random.pm
 lib/DBIx/Router/DataSource/Group/repeater.pm
 lib/DBIx/Router/DataSource/Group/roundrobin.pm
 lib/DBIx/Router/DataSource/Group/shard.pm
-lib/DBIx/Router/DataSource/Handle.pm
 lib/DBIx/Router/DataSource/PassThrough.pm
-lib/DBIx/Router/DataSource/Pool.pm
 lib/DBIx/Router/Rule.pm
 lib/DBIx/Router/Rule/default.pm
 lib/DBIx/Router/Rule/not.pm
@@ -28,3 +25,5 @@ t/boilerplate.t
 t/conf.pl
 t/pod-coverage.t
 t/pod.t
+Makefile.PL
+META.yml
