@@ -10,6 +10,10 @@ my $builder = Module::Build->new(
     build_requires => {
         'Test::More' => 0,
     },
+    requires => {
+        'DBI'            => 1.54,
+        'SQL::Statement' => 0,
+    },
     add_to_cleanup      => [ 'DBIx-Router-*' ],
     create_makefile_pl => 'traditional',
 );
