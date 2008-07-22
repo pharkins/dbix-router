@@ -210,7 +210,7 @@ __END__
 
 =head1 NAME
 
-DBIx::Router - The great new DBIx::Router!
+DBIx::Router - Route DBI queries according to configurable sets of rules
 
 =head1 VERSION
 
@@ -218,25 +218,17 @@ Version 0.01
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
+This project helps scale database access via Perl's DBI by allowing queries to be routed between multiple databases according to customized rules. It relies on DBI's Gofer system for most of the heavy lifting.
 
-Perhaps a little code snippet.
+=head1 METHODS
 
-    use DBIx::Router;
+=head2 new
 
-    my $foo = DBIx::Router->new();
-    ...
+=head2 transmit_request_by_transport
 
-=head1 EXPORT
+=head2 receive_response_by_transport
 
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
-
-=head1 FUNCTIONS
-
-=head2 function1
-
-=head2 function2
+=head2 retry_hook
 
 =head1 AUTHOR
 
