@@ -43,103 +43,41 @@ __END__
 
 =head1 NAME
 
-DBIx::Router::DataSource::Handle - The great new DBIx::Router::DataSource::Handle!
-
-=head1 VERSION
-
-Version 0.01
-
-=cut
-
-our $VERSION = '0.01';
-
+DBIx::Router::DataSource::DSN - Execute requests with a specified DSN
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
+This DataSource class is where most requests end up.  It holds a specific DSN that a combination of Rule and DataSource::Group objects will eventually map to.
 
-Perhaps a little code snippet.
+    my $ds = DBIx::Router::DataSource::DSN->new({ name => 'fallback',
+                                                  dsn  => $dsn,
+                                                  user => $user,
+                                                  password => $password, });
+    
+    my $result = $ds->execute_request( $request, $router );
 
-    use DBIx::Router::DataSource::Handle;
+=head1 METHODS
 
-    my $foo = DBIx::Router::DataSource::Handle->new();
-    ...
+=head2 name
 
-=head1 EXPORT
+Accessor for name attribute.
 
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
+=head2 user
 
-=head1 FUNCTIONS
+Accessor for user attribute.
 
-=head2 function1
+=head2 password
 
-=cut
+Accessor for password attribute.
 
-sub function1 {
-}
+=head2 dsn
 
-=head2 function2
+Accessor for dsn attribute.
 
-=cut
+=head2 executor
 
-sub function2 {
-}
+Accessor for cached DBI::Gofer::Execute object.
 
-=head1 AUTHOR
+=head2 execute_request($request, $router)
 
-Perrin Harkins, C<< <perrin at elem.com> >>
-
-=head1 BUGS
-
-Please report any bugs or feature requests to C<bug-dbix-router-datasource-handle at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBIx-Router>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-
-
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc DBIx::Router
-
-
-You can also look for information at:
-
-=over 4
-
-=item * RT: CPAN's request tracker
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=DBIx-Router>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/DBIx-Router>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/DBIx-Router>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/DBIx-Router>
-
-=back
-
-
-=head1 ACKNOWLEDGEMENTS
-
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright 2008 Perrin Harkins, all rights reserved.
-
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
-
-
-=cut
-
-1; # End of DBIx::Router::DataSource::Handle
+Execute request with the specified DSN, user, and password.  See DBIx::Router::DataSource.
