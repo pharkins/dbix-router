@@ -20,6 +20,7 @@ our $VERSION = '0.01';
 
 __PACKAGE__->mk_accessors(
     qw(
+      go_conf
       conf
       rule_list
       datasources
@@ -49,7 +50,6 @@ sub _init_conf {
     my ($conf) = values %{ $files->[0] };
     $conf = Storable::dclone($conf);    # work around Config::Any caching
 
-    #use Data::Dumper; warn Dumper $conf;
     croak("Config file '$conf_file' failed to load") if ( ref $conf ne 'HASH' );
 
     # init datasources
