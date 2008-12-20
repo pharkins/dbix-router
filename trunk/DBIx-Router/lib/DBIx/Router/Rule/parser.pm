@@ -79,7 +79,7 @@ sub new {
 
 sub accept {
     my ( $self, $request ) = @_;
-
+    warn 'accept called';
     $request->meta->{parsed_stmts} ||= $self->_parse($request);
     return 0 if not @{ $request->meta->{parsed_stmts} };
 
@@ -109,7 +109,7 @@ sub _evaluate_match {
 
     # Change them to regexes
     foreach my $token (@stmt_tokens) {
-        if ( $token =~ s/\*$// ) {
+        if ( $token =~ s/\*$// and not $match->{strict} ) {
             $token = quotemeta($token) . '[^.]+';
         }
         else {
@@ -121,109 +121,154 @@ sub _evaluate_match {
       ->( \@stmt_tokens, $match->{tokens}, $match->{structure} );
 }
 
+sub _normalize_columns {
+    my $self = shift;
+    return map { lc $_ } $_extract_tokens{columns}->(@_);
+}
+
 1;
 __END__
 
 
 =head1 NAME
 
-DBIx::Router::Rule - The great new DBIx::Router::Rule!
-
-=head1 VERSION
-
-Version 0.01
-
-=cut
-
-our $VERSION = '0.01';
-
+DBIx::Router::Rule::parser - SQL routing based on statement parsing
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
+This module uses SQL::Statement to parse your SQL and route it to a data source based on the contents.
 
-Perhaps a little code snippet.
+        # match all queries on the "fruit" table
+        {
+            class => 'parser',
+            match => [
+                {
+                    structure => 'tables',
+                    operator  => 'any',
+                    tokens    => ['fruit']
+                },
+            ],
+            datasource => 'RoundRobin',
+        },
+        
+        # match all queries except those on the "orders" or "customers" tables
+        {
+            class => 'parser',
+                {
+                    structure => 'tables',
+                    operator  => 'none',
+                    tokens    => ['orders', 'customers']
+                },
+            ],
+            datasource => 'RoundRobin',
+        },
+        
+        # match all "INSERT" and "UPDATE" statements on the "fruit" table
+        {
+            class => 'parser',
+            match => [
+                {
+                    structure => 'tables',
+                    operator  => 'any',
+                    tokens    => ['fruit']
+                },
+                {
+                    structure => 'command',
+                    operator  => 'any',
+                    tokens    => ['insert', 'update']
+                },
+            ],
+            datasource => 'Master1',
+        },
 
-    use DBIx::Router::Rule;
+        # match queries that only use the "customers" table
+        {
+            class => 'parser',
+            match => [
+                {
+                    structure => 'tables',
+                    operator  => 'only',
+                    tokens    => ['customers']
+                },
+            ],
+            datasource => 'RoundRobin',
+        },
 
-    my $foo = DBIx::Router::Rule->new();
-    ...
+        # match queries that use the "type" column in the table "fruit"
+        {
+            class => 'parser',
+            match => [
+                {
+                    structure => 'columns',
+                    operator  => 'any',
+                    tokens    => ['fruit.type']
+                },
+            ],
+            datasource => 'RoundRobin',
+        },
 
-=head1 EXPORT
-
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
-
-=head1 FUNCTIONS
-
-=head2 function1
-
-=cut
-
-sub function1 {
-}
-
-=head2 function2
-
-=cut
-
-sub function2 {
-}
-
-=head1 AUTHOR
-
-Perrin Harkins, C<< <perrin at elem.com> >>
-
-=head1 BUGS
-
-Please report any bugs or feature requests to C<bug-dbix-router-rule at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=DBIx-Router>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-
-
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc DBIx::Router
+        # match queries that use both the "type" and "price" columns in the table "fruit"
+        {
+            class => 'parser',
+            match => [
+                {
+                    structure => 'columns',
+                    operator  => 'all',
+                    tokens    => ['fruit.type', 'fruit.price']
+                },
+            ],
+            datasource => 'RoundRobin',
+        },
 
 
-You can also look for information at:
+=head1 OPTIONS
 
-=over 4
+The configuration for this rule is done in the standard DBIx::Router conf file.  It adds a C<match> section where the details of the routing are specified.  Anything that matches the rules described in this section will be routed to the datasource specified in the C<datasource> section. 
 
-=item * RT: CPAN's request tracker
+The C<match> section takes a list of configuration blocks.  If multiple blocks are specified, they will be combined with AND logic as a match requirement.  The blocks take these directives:
 
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=DBIx-Router>
+=head2 C<structure>
 
-=item * AnnoCPAN: Annotated CPAN documentation
+This controls which part of the SQL statement will be looked at.  It can be any of the following:
 
-L<http://annocpan.org/dist/DBIx-Router>
+=over
 
-=item * CPAN Ratings
+=item * tables
 
-L<http://cpanratings.perl.org/d/DBIx-Router>
+Examine the names of tables used in the statement.
 
-=item * Search CPAN
+=item * command
 
-L<http://search.cpan.org/dist/DBIx-Router>
+Examine the command (e.g. "SELECT", "INSERT") used in the statement.
+
+=item * columns
+
+Examine the names of the columns used in the statement.
 
 =back
 
+=head2 C<tokens>
 
-=head1 ACKNOWLEDGEMENTS
+A list of words to match.  In the case of columns, these can use dotted table notation, e.g. C<table.column>.
 
+=head2 C<operator>
 
-=head1 COPYRIGHT & LICENSE
+Controls how the tokens need to compare to the structure for the rule to be considered a match.
 
-Copyright 2008 Perrin Harkins, all rights reserved.
+=over
 
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+=item * any
 
+If any of the tokens match the structure, the rule is a match.
 
-=cut
+=item * none
 
-1; # End of DBIx::Router::Rule
+If none of the tokens match the stucture, the rule is a match.  (Negated form of C<any>.)
+
+=item * all
+
+If all of the given tokens match the structure, the rule is a match.
+
+=item * only
+
+If all of the structure matches the given token, the rule is a match, i.e. the structure must B<only> match the given tokens.

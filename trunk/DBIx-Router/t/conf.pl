@@ -41,8 +41,9 @@
             failover    => 1,
             timeout     => 2,
         },
+    ],
+    rules => [
         {
-            name   => 'Partitioned',
             class  => 'shard',
             type   => 'list',
             table  => 'fruit',
@@ -52,12 +53,7 @@
                 { values => [ 2, 4, 6 ], datasource => 'Master2', },
             ],
         },
-    ],
-    rules => [
-        {
-            class      => 'shard',
-            datasource => 'Partitioned',
-        },
+
 
         #         {
         #             class      => 'regex',
@@ -65,46 +61,46 @@
         #             match      => ['^ \s* SELECT \b '],
         #             not_match  => ['\b FOR \s+ UPDATE \b '],
         #         },
-        {
-            class => 'parser',
-            match => [
-                {
-                    structure => 'tables',
-                    operator  => 'all',
-                    tokens    => ['fruit']
-                },
-                {
-                    structure => 'tables',
-                    operator  => 'none',
-                    tokens    => ['orders']
-                },
-                {
-                    structure => 'command',
-                    operator  => 'any',
-                    tokens    => ['select']
-                },
-                {
-                    structure => 'columns',
-                    operator  => 'any',
-                    tokens    => ['fruit.type']
-                },
-            ],
-            datasource => 'RoundRobin',
-        },
-        {
-            class      => 'readonly',
-            datasource => 'RoundRobin',
-        },
-        {
-            class      => 'not',
-            rule       => { class => 'readonly', },
-            datasource => 'Master1',
-        },
+  #       {
+#             class => 'parser',
+#             match => [
+#                 {
+#                     structure => 'tables',
+#                     operator  => 'all',
+#                     tokens    => ['fruit']
+#                 },
+#                 {
+#                     structure => 'tables',
+#                     operator  => 'none',
+#                     tokens    => ['orders']
+#                 },
+#                 {
+#                     structure => 'command',
+#                     operator  => 'any',
+#                     tokens    => ['select']
+#                 },
+#                 {
+#                     structure => 'columns',
+#                     operator  => 'any',
+#                     tokens    => ['fruit.type']
+#                 },
+#             ],
+#             datasource => 'RoundRobin',
+#         },
+#         {
+#             class      => 'readonly',
+#             datasource => 'RoundRobin',
+#         },
+#         {
+#             class      => 'not',
+#             rule       => { class => 'readonly', },
+#             datasource => 'Master1',
+#         },
 
-        #      {
-        #             class      => 'default',
-        #             datasource => 'Master1',
-        #         },
+               {
+                      class      => 'default',
+                      datasource => 'Master1',
+                  },
     ],
 
     fallback => 0,

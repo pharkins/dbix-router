@@ -68,14 +68,16 @@ my $username = eval { getpwuid($>) } || ''; # fails on windows
 my $can_ssh = ($username && $username eq 'timbo' && -d '.svn');
 my $perl = "$^X  -Mblib=$getcwd/blib"; # ensure sameperl and our blib (note two spaces)
 
+$ENV{DBIX_ROUTER_CONF} ||= 't/conf.pl';
 my %trials = (
     null       => {},
-    'DBIx::Router' => { timeout => $timeout, conf => 't/test_conf.pl' },
+    'DBIx::Router' => { timeout => $timeout },
 );
 
 my @transports = ($opt_transport) ? ($opt_transport) : (sort keys %trials);
 print "Transports: @transports\n";
-my @policies = ($opt_policy) ? ($opt_policy) : qw(pedantic classic rush);
+#my @policies = ($opt_policy) ? ($opt_policy) : qw(pedantic classic rush);
+my @policies = qw(rush);
 print "Policies: @policies\n";
 print "Count: $opt_count\n";
 
@@ -158,7 +160,10 @@ sub run_tests {
 
     ok my $ins_sth = $dbh->prepare("INSERT INTO fruit VALUES (?,?)");
     ok $ins_sth->execute(1, 'oranges');
-    ok $ins_sth->execute(2, 'oranges');
+    ok my $cols_ins_sth = $dbh->prepare("INSERT INTO fruit (dKey, dVal) VALUES (?,?)");
+    ok $cols_ins_sth->execute(2, 'oranges');
+#    ok my $cols_ins_sth = $dbh->prepare("INSERT INTO fruit (dKey, dVal) VALUES (2,'oranges')");
+#    ok $cols_ins_sth->execute();
 
     my $rowset;
     ok $rowset = $dbh->selectall_arrayref("SELECT dKey, dVal FROM fruit ORDER BY dKey");
