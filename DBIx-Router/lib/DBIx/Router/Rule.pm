@@ -8,13 +8,14 @@ use base qw(DBI::Util::_accessor);
 
 __PACKAGE__->mk_accessors(
     qw(
-      datasource
+      _datasource
       )
 );
 
 sub new {
     my ( $self, $args ) = @_;
-    croak('Missing required parameter datasource') if not $args->{datasource};
+    croak('Missing required parameter _datasource')
+      if ( not $args->{_datasource} and not $self->defer_datasource );
     return $self->SUPER::new($args);
 }
 
@@ -22,6 +23,14 @@ sub new {
 sub accept {
     croak('DBIx::Router::Rule::accept should never be called');
 }
+
+# make _datasource() the default implementation of datasource()
+sub datasource {
+    my $self = shift;
+    return $self->_datasource;
+}
+
+sub defer_datasource { 0; }
 
 1;
 __END__

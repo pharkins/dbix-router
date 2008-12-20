@@ -101,11 +101,12 @@ sub _init_conf {
         $self->_load_class($class)
           or croak("Failed to load rule class '$class': $@");
 
-        my $datasource = $datasources{ $rule_args->{datasource} }
-          or croak( "Can't find datasource '$rule_args->{datasource}' "
-              . "configured for rule '$rule_args->{class}'" );
+        if ( $rule_args->{datasource} ) {
+            $rule_args->{_datasource} = $datasources{ delete $rule_args->{datasource} };
+        }
 
-        my $rule = $class->new( { %{$rule_args}, datasource => $datasource } );
+        my $rule = $class->new($rule_args);
+
         push @rules, $rule;
     }
 
@@ -146,13 +147,17 @@ sub transmit_request_by_transport {
 
     # Reset these to clear leftover values from a failover request
     # There's a bug here
-    #$self->go_timeout(undef);
+    $self->go_timeout(undef);
     #$self->go_retry_limit(0);
     #$self->go_retry_hook(undef);
-
+ 
     # "And then, a miracle occurs"
     my $rule_list  = $self->rule_list;
     my $datasource = $rule_list->map_request($cloned_request);
+    if (not ref $datasource) {
+	my $datasource_name = $datasource;
+	$datasource = $self->datasources->{$datasource_name} or croak "Can't find datasource with name $datasource_name";
+    }
     return $datasource->execute_request( $cloned_request, $self );
 }
 

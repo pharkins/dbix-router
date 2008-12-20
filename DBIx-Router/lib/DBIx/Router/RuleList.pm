@@ -23,7 +23,7 @@ sub map_request {
 
     foreach my $rule ( @{ $self->rules } ) {
         if ( $rule->accept($request) ) {
-            return $rule->datasource;
+            return $rule->datasource($request);
         }
     }
 
