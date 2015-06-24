@@ -1,0 +1,1 @@
+This project helps scale database access via Perl's DBI by allowing queries to be routed between multiple databases according to customized rules.  It relies on DBI's Gofer system for most of the heavy lifting.
